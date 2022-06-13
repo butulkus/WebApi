@@ -8,7 +8,11 @@ namespace Catalog.DataContext
     {
         public static void AddDataContext(this IServiceCollection services, IConfiguration configuration)
         {
-
+            services.AddDbContext<CatalogDBContext>(options =>
+                options.UseNpgsql(
+                    configuration.GetConnectionString("IdentityConnection"),
+                    b => b.MigrationsAssembly("Catalog.Api.DataContext")));
+            services.AddScoped<CatalogDBContext>();
         }
     }
 }

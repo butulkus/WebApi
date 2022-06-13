@@ -10,4 +10,8 @@
     <ProjectReference Include="..\Catalog.DataContext\Catalog.DataContext.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Services\" />
+  </ItemGroup>
+
 </Project>
