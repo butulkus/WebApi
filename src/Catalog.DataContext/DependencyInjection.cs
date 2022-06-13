@@ -11,7 +11,7 @@ namespace Catalog.DataContext
             services.AddDbContext<CatalogDBContext>(options =>
                 options.UseNpgsql(
                     configuration.GetConnectionString("IdentityConnection"),
-                    b => b.MigrationsAssembly("Catalog.Api.DataContext")));
+                    b => b.MigrationsAssembly("Catalog.DataContext")));
             services.AddScoped<CatalogDBContext>();
         }
     }
