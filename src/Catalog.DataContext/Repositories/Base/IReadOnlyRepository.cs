@@ -9,5 +9,16 @@ namespace Catalog.Api.DataContext.Repositories.Base
             params Expression<Func<TEntity, object>>[] includes);
         Task<TModel[]> FindAll();
         Task<TModel[]> FindAll(Expression<Func<TEntity, bool>> expression, params Expression<Func<TEntity, object>>[] includes);
+        Task<TModel[]> FindAllWithWherePagging
+            (Expression<Func<TEntity, bool>> expression,
+            int pageSize,
+            int pageIndex,
+            params Expression<Func<TEntity, object>>[] includes);
+        Task<TModel[]> FindAllWithPagging
+            (
+            int pageSize,
+            int pageIndex,
+            params Expression<Func<TEntity, object>>[] includes
+            );
     }
 }

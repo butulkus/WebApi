@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Catalog.DataContext.Repositories.ReadRepositories;
+using Catalog.DataContext.Repositories.RepositoryInterfaces;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -13,6 +15,8 @@ namespace Catalog.DataContext
                     configuration.GetConnectionString("IdentityConnection"),
                     b => b.MigrationsAssembly("Catalog.DataContext")));
             services.AddScoped<CatalogDBContext>();
+
+            services.AddScoped<IReadOnlyCatalogItemRepository, ReadOnlyCatalogItemRepository>();
         }
     }
 }

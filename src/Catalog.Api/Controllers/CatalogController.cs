@@ -1,25 +1,40 @@
 ﻿using AutoMapper;
 using Catalog.Api.Controllers.Base;
+using Catalog.Core.Interfaces;
 using Catalog.Domain.Exceptions;
+using Catalog.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
+using Catalog.Api.Models.Responses;
 
 namespace Catalog.Api.Controllers
 {
     public class CatalogController : BaseController
     {
-        public CatalogController(IMapper mapper) : base(mapper)
+        public readonly ICatalogService _catalogService;
+        public CatalogController(
+            IMapper mapper,
+            ICatalogService catalogService
+            ) : base(mapper)
         {
-            
+            _catalogService = catalogService;
         }
 
         [HttpGet]
-        [Route("products/{id:int}")]
-        public async Task<IActionResult> ProductByIdAsync(int id)
+        [Route("productsByType/{typeId:int}")]
+        [ProducesResponseType(typeof(SuccessBodyResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        public async Task<IActionResult> ProductsByTypeAsync(int typeId, [FromQuery]int pageSize = 10, [FromQuery]int pageIndex = 0)
         {
-            if (id <= 0)
+            if (typeId <= 0)
                 throw new IncorrectProductIdException(Request.Path.Value);
 
-            return Ok();
+            var products = await _catalogService.GetAllItemsByTypeWithPagging(pageSize, pageIndex, typeId);
+
+            if (!products.Any())
+               return BadRequest("Products with that type was not found");
+
+            return Ok(products);
         }
     }
 }

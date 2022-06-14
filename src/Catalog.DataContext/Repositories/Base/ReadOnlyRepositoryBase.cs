@@ -42,6 +42,40 @@ namespace Catalog.Api.DataContext.Repositories.Base
             return Mapper.Map<TModel[]>(result);
         }
 
+        public async Task<TModel[]> FindAllWithWherePagging
+            (Expression<Func<TEntity, bool>> expression,
+            int pageSize,
+            int pageIndex,
+            params Expression<Func<TEntity, object>>[] includes)
+        {
+            var result = await DbSet
+                .Where(expression)
+                .IncludeMultiple(includes)
+                .Skip(pageSize * pageIndex)
+                .Take(pageSize)
+                .AsNoTracking()
+                .ToArrayAsync();
+
+            return Mapper.Map<TModel[]>(result);
+        }
+
+        public async Task<TModel[]> FindAllWithPagging
+            (
+            int pageSize,
+            int pageIndex,
+            params Expression<Func<TEntity, object>>[] includes
+            )
+        {
+            var result = await DbSet
+                .IncludeMultiple(includes)
+                .Skip(pageSize * pageIndex)
+                .Take(pageSize)
+                .AsNoTracking()
+                .ToArrayAsync();
+
+            return Mapper.Map<TModel[]>(result);
+        }
+
         public async Task<TModel?> FindByPropertyOrDefault(string propertyName, object propertyValue)
         {
             var result = await DbSet.AsNoTracking()

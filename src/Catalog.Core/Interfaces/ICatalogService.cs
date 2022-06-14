@@ -4,8 +4,8 @@ namespace Catalog.Core.Interfaces
 {
     public interface ICatalogService
     {
-        Task<CatalogItemModel> GetAllItemsByType(int typeId); // think it will be Enum With Types
-        Task<CatalogItemModel> GetAllItems();
-        Task<CatalogItemModel> GetAllItemsWithPagging(int pageSize, int pageIndex);
+        Task<CatalogItemModel[]> GetAllItemsByTypeWithPagging(int pageSize, int pageIndex, int typeId);
+        Task<CatalogItemModel[]> GetAllItems();
+        Task<CatalogItemModel[]> GetAllItemsWithPagging(int pageSize, int pageIndex);
     }
 }

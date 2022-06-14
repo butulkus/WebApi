@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Catalog.Application.Services;
+using Catalog.Core.Interfaces;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Catalog.Application
@@ -7,7 +9,7 @@ namespace Catalog.Application
     {
         public static void AddApplication(this IServiceCollection services, IConfiguration configuration)
         {
-
+            services.AddScoped<ICatalogService, CatalogService>();
         }
     }
 }
