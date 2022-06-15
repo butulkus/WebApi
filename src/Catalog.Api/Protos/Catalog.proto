@@ -1,0 +1,45 @@
+﻿syntax = "proto3";
+
+option csharp_namespace = "GrpcServer";
+package CatalogApi;
+
+message CatalogItemResponse {
+	int32 ItemId = 1;
+	string name = 2;
+    string ItemHashCode = 3;
+    string description = 4;
+    double price = 5;
+	int32 catalogTypeId = 6;
+	int32 CatalogBrandId = 7;
+    CatalogType catalog_type = 8;
+    CatalogBrand catalog_brand = 9;
+}
+
+message CatalogItemListResponse {
+	repeated CatalogItemResponse data = 1;
+}
+
+message CatalogBrand {
+	string id = 1;
+	string name = 2;
+}
+
+message CatalogType {
+	string id = 1;
+	string type = 2;
+}
+
+message CatalogWholeItemsRequest {
+	int32 pageSize = 2;
+	int32 pageIndex = 3;
+}
+
+message CatalogIdRequest{
+	string ItemId = 1;
+}
+
+service Catalog{
+	rpc GetItemsListWithPagging (CatalogWholeItemsRequest) returns (CatalogItemListResponse);
+
+	rpc GetItemById (CatalogIdRequest) returns (CatalogItemResponse);
+}

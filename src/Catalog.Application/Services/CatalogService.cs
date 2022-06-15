@@ -1,4 +1,5 @@
 ﻿using Catalog.Core.Interfaces;
+using Catalog.DataContext.Entities;
 using Catalog.DataContext.Repositories.RepositoryInterfaces;
 using Catalog.Domain.Models;
 
@@ -11,6 +12,17 @@ namespace Catalog.Application.Services
         public CatalogService(IReadOnlyCatalogItemRepository catalogItemRepository)
         {
             _catalogReadOnlyRepository = catalogItemRepository;
+        }
+
+        public async Task<CatalogItemModel?> FindByIdWithIncludes(Guid id)
+        {
+            var item = await _catalogReadOnlyRepository.FindByPropertyOrDefaultIncludes(nameof(CatalogItem.ItemId),
+                id,
+                s => s.CatalogBrand,
+                s => s.CatalogType
+                );
+
+            return item;
         }
 
         public async Task<CatalogItemModel[]> GetAllItems()

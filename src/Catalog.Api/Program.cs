@@ -1,5 +1,6 @@
 using Catalog.Api.ExceptionDetails;
 using Catalog.Api.Filters;
+using Catalog.Api.Grpc;
 using Catalog.Application;
 using Catalog.DataContext;
 using Hellang.Middleware.ProblemDetails;
@@ -11,6 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDataContext(builder.Configuration);
 builder.Services.AddApplication(builder.Configuration);
+builder.Services.AddGrpc();
 
 builder.Services
     .AddControllers()
@@ -54,7 +56,6 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
-
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger(c =>
@@ -70,7 +71,13 @@ if (app.Environment.IsDevelopment())
 
 app.UseProblemDetails();
 app.UseHttpsRedirection();
+app.UseRouting();
 app.UseAuthorization();
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapGrpcService<CatalogService>();
+});
+
 app.MapControllers();
 
 app.Run();
