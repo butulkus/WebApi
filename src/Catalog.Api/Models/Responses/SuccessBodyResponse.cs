@@ -2,14 +2,14 @@
 
 namespace Catalog.Api.Models.Responses
 {
-    public class SuccessBodyResponse : Response
+    public class SuccessBodyResponse<T> : Response
     {
-        public SuccessBodyResponse(object body)
+        public SuccessBodyResponse(T body)
         {
             Body = body;
             IsSuccess = true;
         }
 
-        public object Body { get; set; }
+        public T Body { get; set; }
     }
 }

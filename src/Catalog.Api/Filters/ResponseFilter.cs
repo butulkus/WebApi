@@ -15,7 +15,7 @@ namespace Catalog.Api.Filters
             switch (context.Result)
             {
                 case OkObjectResult response:
-                    context.Result = new OkObjectResult(new SuccessBodyResponse(response.Value));
+                    context.Result = new OkObjectResult(new SuccessBodyResponse<object>(response.Value));
                     break;
 
                 case EmptyResult:
