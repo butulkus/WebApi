@@ -4,5 +4,15 @@ services:
         build:
             context: .
             dockerfile: Catalog.Api\Dockerfile
+        restart: always
         ports:
             - "8000:80"
+        depends_on:
+            - db-server
+
+    db-server:
+        image: postgres
+        environment:
+            POSTGRES_PASSWORD: 1234
+        ports:
+            - "1400:1433"
