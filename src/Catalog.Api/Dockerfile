@@ -1,3 +1,5 @@
+#See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
+
 FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
 WORKDIR /app
 EXPOSE 80
@@ -6,6 +8,7 @@ EXPOSE 443
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
 COPY ["Catalog.Api/Catalog.Api.csproj", "Catalog.Api/"]
+#COPY ["Catalog.Api/Protos/Catalog.proto", "Catalog.Api/Protos/"]
 COPY ["Catalog.Application/Catalog.Application.csproj", "Catalog.Application/"]
 COPY ["Catalog.Core/Catalog.Core.csproj", "Catalog.Core/"]
 COPY ["Catalog.Domain/Catalog.Domain.csproj", "Catalog.Domain/"]
