@@ -22,27 +22,27 @@ namespace Catalog.Api.DataContext.Repositories.Base
             Mapper = mapper;
         }
 
-        public async Task<TModel[]> FindAll()
+        public async Task<List<TModel>> FindAll()
         {
             var result = await DbSet
                 .AsNoTracking()
-                .ToArrayAsync();
+                .ToListAsync();
 
-            return Mapper.Map<TModel[]>(result);
+            return Mapper.Map<List<TModel>>(result);
         }
 
-        public async Task<TModel[]> FindAll(Expression<Func<TEntity, bool>> expression, params Expression<Func<TEntity, object>>[] includes)
+        public async Task<List<TModel>> FindAll(Expression<Func<TEntity, bool>> expression, params Expression<Func<TEntity, object>>[] includes)
         {
             var result = await DbSet
                 .Where(expression)
                 .IncludeMultiple(includes)
                 .AsNoTracking()
-                .ToArrayAsync();
+                .ToListAsync();
 
-            return Mapper.Map<TModel[]>(result);
+            return Mapper.Map<List<TModel>>(result);
         }
 
-        public async Task<TModel[]> FindAllWithWherePagging
+        public async Task<List<TModel>> FindAllWithIncludesPagging
             (Expression<Func<TEntity, bool>> expression,
             int pageSize,
             int pageIndex,
@@ -54,12 +54,12 @@ namespace Catalog.Api.DataContext.Repositories.Base
                 .Skip(pageSize * pageIndex)
                 .Take(pageSize)
                 .AsNoTracking()
-                .ToArrayAsync();
+                .ToListAsync();
 
-            return Mapper.Map<TModel[]>(result);
+            return Mapper.Map<List<TModel>>(result);
         }
 
-        public async Task<TModel[]> FindAllWithPagging
+        public async Task<List<TModel>> FindAllPagging
             (
             int pageSize,
             int pageIndex,
@@ -71,9 +71,9 @@ namespace Catalog.Api.DataContext.Repositories.Base
                 .Skip(pageSize * pageIndex)
                 .Take(pageSize)
                 .AsNoTracking()
-                .ToArrayAsync();
+                .ToListAsync();
 
-            return Mapper.Map<TModel[]>(result);
+            return Mapper.Map<List<TModel>>(result);
         }
 
         public async Task<TModel?> FindByPropertyOrDefault(string propertyName, object propertyValue)

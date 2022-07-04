@@ -25,16 +25,16 @@ namespace Catalog.Application.Services
             return item;
         }
 
-        public async Task<CatalogItemModel[]> GetAllItems()
+        public async Task<List<CatalogItemModel>> GetAllItems()
         {
             var items = await _catalogReadOnlyRepository.FindAll();
 
             return items;
         }
 
-        public async Task<CatalogItemModel[]> GetAllItemsByTypeWithPagging(int pageSize, int pageIndex, int typeId)
+        public async Task<List<CatalogItemModel>> GetAllItemsByTypeWithPagging(int pageSize, int pageIndex, int typeId)
         {
-            var items = await _catalogReadOnlyRepository.FindAllWithWherePagging(u => u.CatalogTypeId == typeId,
+            var items = await _catalogReadOnlyRepository.FindAllWithIncludesPagging(u => u.CatalogTypeId == typeId,
                 pageSize,
                 pageIndex,
                 u => u.CatalogBrand,
@@ -43,9 +43,9 @@ namespace Catalog.Application.Services
             return items;
         }
 
-        public async Task<CatalogItemModel[]> GetAllItemsWithPagging(int pageSize, int pageIndex)
+        public async Task<List<CatalogItemModel>> GetAllItemsWithPagging(int pageSize, int pageIndex)
         {
-            var items = await _catalogReadOnlyRepository.FindAllWithPagging(pageSize,
+            var items = await _catalogReadOnlyRepository.FindAllPagging(pageSize,
                 pageIndex,
                 u => u.CatalogBrand,
                 u => u.CatalogType

@@ -48,11 +48,11 @@ namespace Catalog.Api.Grpc
 
         public override async Task<CatalogItemListResponse> GetItemsListWithPagging(CatalogWholeItemsRequest request, ServerCallContext context)
         {
-            var items = await _catalogReadOnlyRepository.FindAllWithPagging(request.PageSize, request.PageIndex);
+            var items = await _catalogReadOnlyRepository.FindAllPagging(request.PageSize, request.PageIndex);
 
             var itemsList = new CatalogItemListResponse();
 
-            items.ToList().ForEach(i =>
+            items.ForEach(i =>
             {
                 itemsList.Data.Add(new CatalogItemResponse()
                 {

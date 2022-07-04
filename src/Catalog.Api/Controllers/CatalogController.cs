@@ -25,7 +25,7 @@ namespace Catalog.Api.Controllers
         [Route("productsByType/{typeId:int}")]
         [ProducesResponseType(typeof(SuccessBodyResponse<CatalogItemModel[]>), StatusCodes.Status200OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        public async Task<ActionResult<CatalogItemModel[]>> ProductsByTypeAsync(int typeId, [FromQuery]int pageSize = 10, [FromQuery]int pageIndex = 0)
+        public async Task<ActionResult<List<CatalogItemModel>>> GetProductsByTypeAsync(int typeId, [FromQuery]int pageSize = 10, [FromQuery]int pageIndex = 0)
         {
             if (typeId <= 0)
                 throw new IncorrectProductIdException(Request.Path.Value);
@@ -42,7 +42,7 @@ namespace Catalog.Api.Controllers
         [Route("productById/{productId}")]    
         [ProducesResponseType(typeof(SuccessBodyResponse<CatalogItemModel>), StatusCodes.Status200OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        public async Task<ActionResult<CatalogItemModel>> GetProductsById(string productId)
+        public async Task<ActionResult<CatalogItemModel>> ProductById(string productId)
         {
             if (string.IsNullOrEmpty(productId))
                 throw new IncorrectProductIdException(Request.Path.Value);
@@ -50,9 +50,37 @@ namespace Catalog.Api.Controllers
             var products = await _catalogService.FindByIdWithIncludes(new Guid(productId));
 
             if (products is null)
-                return BadRequest("Products with that id was not found");
+                return BadRequest("Product with that id was not found");
 
             return Ok(products);
         }
+
+        [HttpGet]
+        [Route("products")]
+        [ProducesResponseType(typeof(SuccessBodyResponse<CatalogItemModel>), StatusCodes.Status200OK)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        public async Task<ActionResult<List<CatalogItemModel>>> GetAllProducts([FromQuery] int pageSize = 10, [FromQuery] int pageIndex = 0)
+        {
+            var products = await _catalogService.GetAllItemsWithPagging(pageSize, pageIndex);
+
+            if (!products.Any())
+                return BadRequest("Products was not found");
+
+            return Ok(products);
+        }
+
+        //[HttpGet]
+        //[Route("addIntoBasket")]
+        //[ProducesResponseType(typeof(SuccessBodyResponse<CatalogItemModel>), StatusCodes.Status200OK)]
+        //[ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        //public async Task<ActionResult<List<CatalogItemModel>>> AddIntoBasket(string productId) // id's into cash + get this id's into basket
+        //{
+        //    var products = await _catalogService.GetAllItemsWithPagging(pageSize, pageIndex);
+
+        //    if (!products.Any())
+        //        return BadRequest("Products was not found");
+
+        //    return Ok(products);
+        //}
     }
 }
