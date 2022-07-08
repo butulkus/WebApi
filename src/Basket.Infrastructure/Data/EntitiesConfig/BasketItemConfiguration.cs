@@ -9,6 +9,28 @@ namespace Basket.Infrastructure.Data.EntitiesConfig
         public void Configure(EntityTypeBuilder<BasketItem> builder)
         {
             builder.HasKey(x => x.Id);
+
+            builder.Ignore(x => x.GetCustomerBaskets);
+
+            builder.Property<string>("ProductName")
+                .UsePropertyAccessMode(PropertyAccessMode.Field)
+                .HasColumnName("ProductName")
+                .IsRequired(true);
+
+            builder.Property<decimal>("CurrentPrice")
+                .UsePropertyAccessMode(PropertyAccessMode.Field)
+                .HasColumnName("CurrentPrice")
+                .IsRequired(true);
+
+            builder.Property<decimal>("OldPrice")
+                .UsePropertyAccessMode(PropertyAccessMode.Field)
+                .HasColumnName("OldPrice")
+                .IsRequired(true);
+
+            builder.Property<string>("ItemHashCode")
+                .UsePropertyAccessMode(PropertyAccessMode.Field)
+                .HasColumnName("ItemHashCode")
+                .IsRequired(true);
         }
     }
 }

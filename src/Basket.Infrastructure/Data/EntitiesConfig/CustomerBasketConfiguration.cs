@@ -9,11 +9,16 @@ namespace Basket.Infrastructure.Data.EntitiesConfig
         public void Configure(EntityTypeBuilder<CustomerBasket> builder)
         {
             builder.Ignore(x => x.Id);
+            builder.Ignore(x => x.GetCustomerId);
+            builder.Ignore(x => x.GetItems);
 
-            builder.HasKey(x => x.GetCustomerId);
+            builder.UsePropertyAccessMode(PropertyAccessMode.Field)
+                .HasKey("CustomerId");
 
-            builder.HasMany(x => x.GetItems)
-                .WithMany(x => x.GetCustomerBaskets);
+            builder.UsePropertyAccessMode(PropertyAccessMode.Field)
+                .HasMany("Items")
+                .WithMany("customerBaskets")
+                .UsingEntity(j => j.ToTable("PotentialPurchases"));
         }
     }
 }
