@@ -68,19 +68,5 @@ namespace Catalog.Api.Controllers
 
             return Ok(products);
         }
-
-        //[HttpGet]
-        //[Route("addIntoBasket")]
-        //[ProducesResponseType(typeof(SuccessBodyResponse<CatalogItemModel>), StatusCodes.Status200OK)]
-        //[ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        //public async Task<ActionResult<List<CatalogItemModel>>> AddIntoBasket(string productId) // id's into cash + get this id's into basket
-        //{
-        //    var products = await _catalogService.GetAllItemsWithPagging(pageSize, pageIndex);
-
-        //    if (!products.Any())
-        //        return BadRequest("Products was not found");
-
-        //    return Ok(products);
-        //}
     }
 }
