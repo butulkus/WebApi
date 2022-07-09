@@ -14,6 +14,8 @@ builder.Services.AddDataContext(builder.Configuration);
 builder.Services.AddApplication(builder.Configuration);
 builder.Services.AddGrpc();
 
+builder.Services.AddSingleton(typeof(ILogger), builder.Services.BuildServiceProvider().GetService<ILogger<Program>>());
+
 builder.Services
     .AddControllers()
     .AddMvcOptions(options =>

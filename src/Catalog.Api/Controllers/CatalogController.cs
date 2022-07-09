@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using Catalog.Api.Models.Responses;
 using Catalog.Domain.Models;
+using Catalog.Api.Models.Request;
 
 namespace Catalog.Api.Controllers
 {
@@ -67,6 +68,23 @@ namespace Catalog.Api.Controllers
                 return BadRequest("Products was not found");
 
             return Ok(products);
+        }
+
+        [HttpPost]
+        [Route("updatePrice")]
+        [ProducesResponseType(typeof(SuccessResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        public async Task<IActionResult> UpdateCatalogItemPrice([FromBody] NewProductPriceRequest newProductPriceRequest)
+        {
+            if (newProductPriceRequest.NewPrice <= 0)
+                throw new ArgumentException("Price cannot be less or equal zero");
+
+            var products = await _catalogService.UpdateItem(newProductPriceRequest.productId, newProductPriceRequest.NewPrice);
+
+            if (products == 0)
+                return Ok("but price wasn't updated");
+
+            return Ok();
         }
     }
 }

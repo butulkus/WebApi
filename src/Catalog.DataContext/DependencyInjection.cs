@@ -1,5 +1,6 @@
 ﻿using Catalog.DataContext.Repositories.ReadRepositories;
 using Catalog.DataContext.Repositories.RepositoryInterfaces;
+using Catalog.DataContext.Repositories.WriteRepositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,6 +18,7 @@ namespace Catalog.DataContext
             services.AddScoped<CatalogDBContext>();
 
             services.AddScoped<IReadOnlyCatalogItemRepository, ReadOnlyCatalogItemRepository>();
+            services.AddScoped<IWriteCatalogItemRepository, WriteCatalogItemRepository>();
         }
     }
 }

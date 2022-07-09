@@ -8,10 +8,12 @@ namespace Catalog.Application.Services
     public class CatalogService : ICatalogService
     {
         public readonly IReadOnlyCatalogItemRepository _catalogReadOnlyRepository;
+        private readonly IWriteCatalogItemRepository _writeCatalogItemRepository;
 
-        public CatalogService(IReadOnlyCatalogItemRepository catalogItemRepository)
+        public CatalogService(IReadOnlyCatalogItemRepository catalogItemRepository, IWriteCatalogItemRepository writeCatalogItemRepository)
         {
             _catalogReadOnlyRepository = catalogItemRepository;
+            _writeCatalogItemRepository = writeCatalogItemRepository;
         }
 
         public async Task<CatalogItemModel?> FindByIdWithIncludes(Guid id)
@@ -50,6 +52,13 @@ namespace Catalog.Application.Services
                 u => u.CatalogBrand,
                 u => u.CatalogType
                 );
+
+            return items;
+        }
+
+        public async Task<int> UpdateItem(Guid itemId, decimal newPrice)
+        {
+            var items = await _writeCatalogItemRepository.UpdateItemPrice(itemId, newPrice);
 
             return items;
         }

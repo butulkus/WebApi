@@ -8,5 +8,6 @@ namespace Catalog.Core.Interfaces
         Task<List<CatalogItemModel>> GetAllItems();
         Task<List<CatalogItemModel>> GetAllItemsWithPagging(int pageSize, int pageIndex);
         Task<CatalogItemModel?> FindByIdWithIncludes(Guid id);
+        Task<int> UpdateItem(Guid itemId, decimal newPrice);
     }
 }
