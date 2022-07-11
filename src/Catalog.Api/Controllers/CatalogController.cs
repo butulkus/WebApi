@@ -8,18 +8,23 @@ using System.Net;
 using Catalog.Api.Models.Responses;
 using Catalog.Domain.Models;
 using Catalog.Api.Models.Request;
+using Catalog.Api.IntegrationEvents;
+using Catalog.Api.IntegrationEvents.Events;
 
 namespace Catalog.Api.Controllers
 {
     public class CatalogController : BaseController
     {
-        public readonly ICatalogService _catalogService;
+        private readonly ICatalogService _catalogService;
+        private readonly ICatalogIntegrationEventService _catalogIntegrationEventService;
+
         public CatalogController(
             IMapper mapper,
-            ICatalogService catalogService
-            ) : base(mapper)
+            ICatalogService catalogService,
+            ICatalogIntegrationEventService catalogIntegrationEventService) : base(mapper)
         {
             _catalogService = catalogService;
+            _catalogIntegrationEventService = catalogIntegrationEventService;
         }
 
         [HttpGet]
@@ -83,6 +88,17 @@ namespace Catalog.Api.Controllers
 
             if (products == 0)
                 return Ok("but price wasn't updated");
+
+            return Ok();
+        }
+
+        [HttpGet]
+        [Route("get")]
+        [ProducesResponseType(typeof(SuccessResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        public async Task<IActionResult> GetRecieverMessage()
+        {
+            _catalogIntegrationEventService.Publish(new CatalogItemPriceChangedEvent(new Guid("51672ac4-4b22-4700-984f-ea93b3e19bce"), 228));
 
             return Ok();
         }

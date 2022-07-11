@@ -1,10 +1,13 @@
 using Catalog.Api.ExceptionDetails;
 using Catalog.Api.Filters;
 using Catalog.Api.Grpc;
+using Catalog.Api.IntegrationEvents;
 using Catalog.Application;
 using Catalog.DataContext;
 using Hellang.Middleware.ProblemDetails;
 using Microsoft.OpenApi.Models;
+using RabbitMQBus;
+using RabbitMQBus.Interfaces;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 
@@ -12,6 +15,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDataContext(builder.Configuration);
 builder.Services.AddApplication(builder.Configuration);
+
+builder.Services.AddTransient<ICatalogIntegrationEventService, CatalogIntegrationEventService>();
+builder.Services.AddSingleton<IEventBus, RabbitMQEventBus>();
+
 builder.Services.AddGrpc();
 
 builder.Services.AddSingleton(typeof(ILogger), builder.Services.BuildServiceProvider().GetService<ILogger<Program>>());

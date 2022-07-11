@@ -1,11 +1,16 @@
+using Basket.Api;
 using Basket.Infrastructure;
 using Microsoft.OpenApi.Models;
+using RabbitMQBus;
+using RabbitMQBus.Interfaces;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDataContext(builder.Configuration);
+
+builder.Services.AddSingleton<IEventBus, RabbitMQEventBus>();
 
 builder.Services
     .AddControllers()
@@ -42,18 +47,17 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
-if (true/*app.Environment.IsDevelopment()*/)
+app.UseSwagger(c =>
 {
-    app.UseSwagger(c =>
-    {
-        c.SerializeAsV2 = true;
-    });
+    c.SerializeAsV2 = true;
+});
 
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint($"{(!string.IsNullOrEmpty(pathForSwagger) ? pathForSwagger : string.Empty)}/swagger/v1/swagger.json", "Basket.Api V1");
-    });
-}
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint($"{(!string.IsNullOrEmpty(pathForSwagger) ? pathForSwagger : string.Empty)}/swagger/v1/swagger.json", "Basket.Api V1");
+});
+
+app.ConfigureEventBus();
 
 app.UseHttpsRedirection();
 app.UseRouting();
