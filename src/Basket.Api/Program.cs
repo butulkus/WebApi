@@ -1,5 +1,11 @@
+using Autofac;
+using Autofac.Extensions.DependencyInjection;
 using Basket.Api;
+using Basket.Api.IntegrationEvents.EventHandlers;
+using Basket.Domain.Interfaces;
 using Basket.Infrastructure;
+using Basket.Infrastructure.Data.Repositories;
+using Basket.Infrastructure.Services;
 using Microsoft.OpenApi.Models;
 using RabbitMQBus;
 using RabbitMQBus.Interfaces;
@@ -9,15 +15,22 @@ using System.Text.Json;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDataContext(builder.Configuration);
+builder.Services.AddScoped<IBasketRepository, BasketRepository>();
+builder.Services.AddScoped<IBasketService, BasketService>();
 
-builder.Services.AddSingleton<IEventBus, RabbitMQEventBus>();
+builder.Services.AddTransient<CatalogItemPriceChangedEventHandler>();
 
+// Autofac
+builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
+builder.Host.ConfigureContainer<ContainerBuilder>(builder =>
+{
+    builder.RegisterType<RabbitMQEventBus>().As<IEventBus>().SingleInstance();
+});
+// Autofac
+
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services
     .AddControllers()
-    //.AddMvcOptions(options =>
-    //{
-    //    options.Filters.Add<ResponseFilter>();
-    //})
     .ConfigureApiBehaviorOptions(options =>
     {
         options.SuppressModelStateInvalidFilter = true;

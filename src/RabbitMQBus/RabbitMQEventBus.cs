@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Autofac;
+using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using RabbitMQBus.Event;
@@ -10,10 +11,13 @@ namespace RabbitMQBus
 {
     public class RabbitMQEventBus : IEventBus
     {
+        const string AUTOFAC_SCOPE_NAME = "RabbitMQEventBus";
+
         private IConnection _connection; // make readonly if works
         private IModel _channel;
+        private readonly ILifetimeScope _autofac;
 
-        public RabbitMQEventBus()
+        public RabbitMQEventBus(ILifetimeScope autofac)
         {
             var factory = new ConnectionFactory { HostName = "localhost" };
             _connection = factory.CreateConnection();
@@ -24,6 +28,8 @@ namespace RabbitMQBus
                 exclusive: false,
                 autoDelete: false,
                 arguments: null);
+
+            _autofac = autofac;
         }
 
         public void Publish(IntegrationEvent @event)
@@ -37,22 +43,32 @@ namespace RabbitMQBus
                            body: body);
         }
 
-        public async Task Subscribe() // it excites without await, mb replace with sync
+        public void Subscribe()
         {
             BindToQueue();
 
-            await ListenQueue(); 
+            ListenQueue(); 
         }
 
-        private Task ListenQueue()
+        private void ListenQueue()
         {
+            /* using */var autofac = _autofac.BeginLifetimeScope(AUTOFAC_SCOPE_NAME); // be carefull with string param(name of scope)
+
             var consumer = new EventingBasicConsumer(_channel);
 
             consumer.Received += (ch, ea) =>
             {
                 var message = Encoding.UTF8.GetString(ea.Body.ToArray());
 
-                // tut karoche method na obnovlenie vizivat
+                var eventType = Type.GetType("Basket.Api.IntegrationEvents.Events.CatalogItemPriceChangedEvent,Basket.Api");
+                var integrationEvent = System.Text.Json.JsonSerializer.Deserialize(message, eventType, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true });
+                var concreteType = typeof(IEventHandler<>).MakeGenericType(eventType);
+
+                var handlerType = Type.GetType("Basket.Api.IntegrationEvents.EventHandlers.CatalogItemPriceChangedEventHandler,Basket.Api");
+                var handler = autofac.ResolveOptional(handlerType);
+
+                concreteType.GetMethod("Handle").Invoke(handler, new object[] { integrationEvent });
+
                 _channel.BasicAck(ea.DeliveryTag, false);
             };
 
@@ -60,8 +76,6 @@ namespace RabbitMQBus
                 "MyQueue",
                 false,
                 consumer);
-
-            return Task.CompletedTask;
         }
 
         private void BindToQueue()

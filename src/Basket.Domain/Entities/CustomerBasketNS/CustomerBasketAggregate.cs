@@ -15,13 +15,13 @@ namespace Basket.Domain.Entities.CustomerBasketNS
         public Guid GetCustomerId => CustomerId;
         public List<BasketItem> GetItems => Items;
 
-        public void AddBasketItem(string productName, decimal price, decimal oldPrice)
+        public void AddBasketItem(Guid id, string productName, decimal price, decimal oldPrice, string itemHashCode)
         {
             var priceLessOrEqualZero = price <= 0 || oldPrice <= 0;
             if (priceLessOrEqualZero)
                 throw new DomainPriceException("invalid price");
 
-            var newItem = new BasketItem(productName, price, oldPrice);
+            var newItem = new BasketItem(id, productName, price, oldPrice, itemHashCode);
             Items.Add(newItem);
         }
     }

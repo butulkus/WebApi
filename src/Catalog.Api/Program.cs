@@ -1,3 +1,5 @@
+using Autofac;
+using Autofac.Extensions.DependencyInjection;
 using Catalog.Api.ExceptionDetails;
 using Catalog.Api.Filters;
 using Catalog.Api.Grpc;
@@ -17,7 +19,16 @@ builder.Services.AddDataContext(builder.Configuration);
 builder.Services.AddApplication(builder.Configuration);
 
 builder.Services.AddTransient<ICatalogIntegrationEventService, CatalogIntegrationEventService>();
-builder.Services.AddSingleton<IEventBus, RabbitMQEventBus>();
+
+/// <summary> 
+/// Autofac
+builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
+builder.Host.ConfigureContainer<ContainerBuilder>(builder =>
+{
+    builder.RegisterType<RabbitMQEventBus>().As<IEventBus>().SingleInstance();
+});
+/// </summary> 
+/// Autofac
 
 builder.Services.AddGrpc();
 

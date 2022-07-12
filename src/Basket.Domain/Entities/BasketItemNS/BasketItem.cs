@@ -7,8 +7,6 @@ namespace Basket.Domain.Entities.BasketItemNS
     {
         protected BasketItem()
         {
-            ItemHashCode = Guid.NewGuid().ToString().Trim();
-            Id = Guid.NewGuid();
             customerBaskets = new List<CustomerBasket>();
         }
 
