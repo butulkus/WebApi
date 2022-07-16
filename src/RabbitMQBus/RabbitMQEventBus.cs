@@ -1,9 +1,15 @@
 ﻿using Autofac;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Polly;
+using Polly.Retry;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using RabbitMQ.Client.Exceptions;
 using RabbitMQBus.Event;
+using RabbitMQBus.EventsAndEventHandlersList;
 using RabbitMQBus.Interfaces;
+using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 
@@ -11,76 +17,171 @@ namespace RabbitMQBus
 {
     public class RabbitMQEventBus : IEventBus
     {
+        const string EXCHANGE_NAME = "RabbitMQEventBus";
         const string AUTOFAC_SCOPE_NAME = "RabbitMQEventBus";
+        const string QUEUE_NAME = "MyQueue2"; // TODO will Refactor it
 
-        private IConnection _connection; // make readonly if works
+        private IConnection _connection;
         private IModel _channel;
-        private readonly ILifetimeScope _autofac;
+        private readonly int _retryAmount;
 
-        public RabbitMQEventBus(ILifetimeScope autofac)
+        private readonly ILifetimeScope _autofac;
+        private readonly ILogger<RabbitMQEventBus> _logger;
+
+        public RabbitMQEventBus(ILifetimeScope autofac, ILogger<RabbitMQEventBus> logger, int retryAmount = 3)
         {
-            var factory = new ConnectionFactory { HostName = "localhost" };
-            _connection = factory.CreateConnection();
-            _channel = _connection.CreateModel();
-            _channel.QueueDeclare(
-                queue: "MyQueue",
+            _autofac = autofac;
+            _logger = logger;
+            _retryAmount = retryAmount;
+
+            _connection = CreateConnection("localhost");
+            _channel = CreateChannel();
+        }
+
+        public void Publish(IntegrationEvent @event)
+        {
+            var polly = RetryPolicy.Handle<BrokerUnreachableException>()
+                .Or<SocketException>()
+                .WaitAndRetry(_retryAmount,
+                              retryTime => TimeSpan.FromSeconds(Math.Pow(2, retryTime)),
+                              (exception, time) =>
+                              {
+                                  _logger.LogError(exception,
+                                                   "Exception appeared while trying to resend message, Time passed: {time}, ex: {exception}",
+                                                   time.TotalSeconds,
+                                                   exception.Message);
+                              });
+
+            var json = JsonConvert.SerializeObject(@event);
+            var body = Encoding.UTF8.GetBytes(json);
+
+            var routingKey = @event.GetType().Name;
+
+
+            // Made with polly coz connection may
+            // return exception
+            polly.Execute(() =>
+            {
+                _logger.LogTrace("Publishing message...");
+
+                _channel.BasicPublish(exchange: EXCHANGE_NAME,
+                           routingKey: routingKey,
+                           mandatory: true,
+                           basicProperties: null,
+                           body: body);
+            });
+        }
+
+        public void Subscribe(string eventName)
+        {
+            BindQueue(eventName);
+
+            ListenQueue(); 
+        }
+
+        private IConnection CreateConnection(string hostName)
+        {
+            _logger.LogTrace("Creating a connection");
+
+            var factory = new ConnectionFactory { HostName = hostName, DispatchConsumersAsync = true };
+            var connection = factory.CreateConnection();
+
+            _logger.LogTrace("Connection was created, HostName: {hostname}", hostName);
+
+            return connection;
+        }
+
+        private IModel CreateChannel()
+        {
+            _logger.LogTrace("Creating a channel");
+
+            var channel = _connection.CreateModel();
+
+            channel.ExchangeDeclare(exchange: EXCHANGE_NAME,
+                                    type: "direct");
+
+            channel.QueueDeclare(
+                queue: QUEUE_NAME,
                 durable: false,
                 exclusive: false,
                 autoDelete: false,
                 arguments: null);
 
-            _autofac = autofac;
+            return channel;
         }
 
-        public void Publish(IntegrationEvent @event)
+        private void BindQueue(string eventName)
         {
-            var json = JsonConvert.SerializeObject(@event);
-            var body = Encoding.UTF8.GetBytes(json);
+            _channel.QueueBind(queue: QUEUE_NAME,
+                               exchange: EXCHANGE_NAME,
+                               routingKey: eventName);
 
-            _channel.BasicPublish(exchange: "",
-                           routingKey: "MyQueue",
-                           basicProperties: null,
-                           body: body);
-        }
-
-        public void Subscribe()
-        {
-            BindToQueue();
-
-            ListenQueue(); 
+            _logger.LogTrace("Queue: {queuename} was binded", QUEUE_NAME);
         }
 
         private void ListenQueue()
         {
-            /* using */var autofac = _autofac.BeginLifetimeScope(AUTOFAC_SCOPE_NAME); // be carefull with string param(name of scope)
+            _logger.LogTrace("Starting listen a queue");
 
-            var consumer = new EventingBasicConsumer(_channel);
+            var consumer = new AsyncEventingBasicConsumer(_channel);
 
-            consumer.Received += (ch, ea) =>
-            {
-                var message = Encoding.UTF8.GetString(ea.Body.ToArray());
-
-                var eventType = Type.GetType("Basket.Api.IntegrationEvents.Events.CatalogItemPriceChangedEvent,Basket.Api");
-                var integrationEvent = System.Text.Json.JsonSerializer.Deserialize(message, eventType, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true });
-                var concreteType = typeof(IEventHandler<>).MakeGenericType(eventType);
-
-                var handlerType = Type.GetType("Basket.Api.IntegrationEvents.EventHandlers.CatalogItemPriceChangedEventHandler,Basket.Api");
-                var handler = autofac.ResolveOptional(handlerType);
-
-                concreteType.GetMethod("Handle").Invoke(handler, new object[] { integrationEvent });
-
-                _channel.BasicAck(ea.DeliveryTag, false);
-            };
+            consumer.Received += Consumer_Received;
 
             _channel.BasicConsume(
-                "MyQueue",
-                false,
-                consumer);
+                queue: QUEUE_NAME,
+                autoAck: false,
+                consumer: consumer);
         }
 
-        private void BindToQueue()
+        private async Task Consumer_Received(object ch, BasicDeliverEventArgs eventArgs)
         {
+            var message = Encoding.UTF8.GetString(eventArgs.Body.ToArray());
+            var eventName = eventArgs.RoutingKey;
 
+            try
+            {
+                await HandleEvent(message, eventName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "----- Message was not handled {message}, event: {event}", message, eventName);
+            }
+
+            _channel.BasicAck(eventArgs.DeliveryTag, false);
+        }
+
+        private async Task HandleEvent(string message, string eventName)
+        {
+            using var autofac = _autofac.BeginLifetimeScope(AUTOFAC_SCOPE_NAME);
+            foreach (var events in EventsList.Events)
+            {
+                if (events.eventName == eventName)
+                {
+                    var eventType = Type.GetType(events.eventPath);
+                    var integrationEvent = System.Text.Json.JsonSerializer.Deserialize(message, eventType, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true });
+                    var concreteType = typeof(IEventHandler<>).MakeGenericType(eventType);
+
+                    var handlerType = Type.GetType(events.eventHandlerPath);
+                    var handler = autofac.ResolveOptional(handlerType);
+
+                    // Have made await + Task because using
+                    // disposed it earlier than method had completed
+                    await (Task)concreteType.GetMethod("Handle").Invoke(handler, new object[] { integrationEvent });
+                }
+            }
+        }
+
+        public void Dispose()
+        {
+            if (_channel != null)
+            {
+                _channel.Dispose();
+            }
+
+            if (_connection != null)
+            {
+                _connection.Dispose();
+            }
         }
     }
 }

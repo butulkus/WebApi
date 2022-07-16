@@ -1,4 +1,5 @@
-﻿using RabbitMQBus.Interfaces;
+﻿using RabbitMQBus.EventsAndEventHandlersList;
+using RabbitMQBus.Interfaces;
 
 namespace Basket.Api
 {
@@ -8,7 +9,7 @@ namespace Basket.Api
         {
             var eventbus = app.ApplicationServices.GetRequiredService<IEventBus>();
 
-            eventbus.Subscribe();
+            eventbus.Subscribe("CatalogItemPriceChangedEvent");
         }
     }
 }

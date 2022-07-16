@@ -11,6 +11,6 @@ namespace Basket.Domain.Entities.CustomerBasketNS
         }
 
         private Guid CustomerId;
-        private readonly List<BasketItem> Items;
+        private List<BasketItem> Items;
     }
 }

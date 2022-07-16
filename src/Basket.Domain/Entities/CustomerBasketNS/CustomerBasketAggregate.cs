@@ -12,8 +12,10 @@ namespace Basket.Domain.Entities.CustomerBasketNS
             Items = items;
         }
 
-        public Guid GetCustomerId => CustomerId;
-        public List<BasketItem> GetItems => Items;
+        public void Update(List<BasketItem> items)
+        {
+            Items = items;
+        }
 
         public void AddBasketItem(Guid id, string productName, decimal price, decimal oldPrice, string itemHashCode)
         {
@@ -24,5 +26,9 @@ namespace Basket.Domain.Entities.CustomerBasketNS
             var newItem = new BasketItem(id, productName, price, oldPrice, itemHashCode);
             Items.Add(newItem);
         }
+
+        public Guid GetCustomerId() => CustomerId;
+        public IEnumerable<BasketItem> GetItems() => Items.AsReadOnly();
+
     }
 }

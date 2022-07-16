@@ -5,6 +5,6 @@ namespace RabbitMQBus.Interfaces
     public interface IEventBus
     {
         void Publish(IntegrationEvent @event);
-        void Subscribe();
+        void Subscribe(string eventName);
     }
 }

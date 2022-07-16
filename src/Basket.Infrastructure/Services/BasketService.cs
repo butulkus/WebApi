@@ -22,15 +22,13 @@ namespace Basket.Infrastructure.Services
             if (basketItem == null)
                 throw new ArgumentNullException("Entity not found");
 
-            var item = basketItem.GetProductName;
-            var newItem = new BasketItem(
-                id,
-                basketItem.GetProductName,
-                newPrice,
-                basketItem.GetOldPrice,
-                basketItem.GetItemHashCode);
+            basketItem.Update(
+                basketItem.GetProductName(),
+                basketItem.GetCurrentPrice(),
+                basketItem.GetOldPrice(),
+                basketItem.GetItemHashCode());
 
-            var updatedItem = await _basketRepository.UpdateBasketItemPrice(newItem);
+            var updatedItem = await _basketRepository.UpdateBasketItemPrice(basketItem);
 
             return updatedItem;
         }
