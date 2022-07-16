@@ -77,7 +77,7 @@ namespace Catalog.Api.Controllers
 
         [HttpPost]
         [Route("updatePrice")]
-        [ProducesResponseType(typeof(SuccessResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         public async Task<IActionResult> UpdateCatalogItemPrice([FromBody] NewProductPriceRequest newProductPriceRequest)
         {
@@ -87,20 +87,12 @@ namespace Catalog.Api.Controllers
             var products = await _catalogService.UpdateItem(newProductPriceRequest.productId, newProductPriceRequest.NewPrice);
 
             if (products == 0)
-                return Ok("but price wasn't updated");
+                return Ok("Price wasn't changed");
 
-            return Ok();
-        }
+            var itemPriceChangedEvent = new CatalogItemPriceChangedEvent(newProductPriceRequest.productId, newProductPriceRequest.NewPrice);
+            _catalogIntegrationEventService.Publish(itemPriceChangedEvent);
 
-        [HttpGet]
-        [Route("get")]
-        [ProducesResponseType(typeof(SuccessResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        public async Task<IActionResult> GetRecieverMessage()
-        {
-            _catalogIntegrationEventService.Publish(new CatalogItemPriceChangedEvent(new Guid("51672ac4-4b22-4700-984f-ea93b3e19bce"), 228));
-
-            return Ok();
+            return Ok(newProductPriceRequest.productId);
         }
     }
 }

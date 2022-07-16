@@ -10,11 +10,6 @@ namespace Basket.Infrastructure.Data.EntitiesConfig
         {
             builder.HasKey(x => x.Id);
 
-            builder.Ignore(x => x.GetCustomerBaskets);
-            builder.Ignore(x => x.GetProductName);
-            builder.Ignore(x => x.GetPrice);
-            builder.Ignore(x => x.GetOldPrice);
-
             builder.Property<string>("ProductName")
                 .UsePropertyAccessMode(PropertyAccessMode.Field)
                 .HasColumnName("ProductName")

@@ -20,13 +20,15 @@ builder.Services.AddScoped<IBasketService, BasketService>();
 
 builder.Services.AddTransient<CatalogItemPriceChangedEventHandler>();
 
-// Autofac
+/// <summary> 
+/// Autofac
 builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
 builder.Host.ConfigureContainer<ContainerBuilder>(builder =>
 {
     builder.RegisterType<RabbitMQEventBus>().As<IEventBus>().SingleInstance();
 });
-// Autofac
+/// </summary> 
+/// Autofac
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services
