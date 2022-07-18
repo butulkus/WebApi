@@ -35,6 +35,8 @@ namespace Basket.Infrastructure.Data.Repositories
 
             await _basketDBContext.SaveChangesAsync();
 
+            _logger.LogTrace("DB was updated, entity: {entity}", entity?.GetType().Name);
+
             return entity;
         }
     }

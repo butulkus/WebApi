@@ -24,7 +24,7 @@ namespace Basket.Infrastructure.Services
 
             basketItem.Update(
                 basketItem.GetProductName(),
-                basketItem.GetCurrentPrice(),
+                newPrice,
                 basketItem.GetOldPrice(),
                 basketItem.GetItemHashCode());
 

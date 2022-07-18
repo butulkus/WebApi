@@ -20,6 +20,8 @@ namespace Basket.Api.IntegrationEvents.EventHandlers
 
         public Task Handle(CatalogItemPriceChangedEvent @event)
         {
+            _logger.LogTrace("Handling event: {event}", @event.GetType().Name);
+
             return _basketService.UpdateItemPrice(@event.ItemId, @event.NewPrice);
         }
     }
