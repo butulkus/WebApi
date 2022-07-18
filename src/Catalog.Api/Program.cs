@@ -25,6 +25,7 @@ builder.Services.AddTransient<ICatalogIntegrationEventService, CatalogIntegratio
 builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
 builder.Host.ConfigureContainer<ContainerBuilder>(builder =>
 {
+    builder.RegisterType<SubscriptionsManager>().As<ISubscriptionsManager>().SingleInstance();
     builder.RegisterType<RabbitMQEventBus>().As<IEventBus>().SingleInstance();
 });
 /// </summary> 
