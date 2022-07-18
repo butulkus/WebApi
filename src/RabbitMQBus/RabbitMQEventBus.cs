@@ -40,36 +40,20 @@ namespace RabbitMQBus
 
         public void Publish(IntegrationEvent @event)
         {
-            var polly = RetryPolicy.Handle<BrokerUnreachableException>()
-                .Or<SocketException>()
-                .WaitAndRetry(_retryAmount,
-                              retryTime => TimeSpan.FromSeconds(Math.Pow(2, retryTime)),
-                              (exception, time) =>
-                              {
-                                  _logger.LogError(exception,
-                                                   "Exception appeared while trying to resend message, Time passed: {time}, ex: {exception}",
-                                                   time.TotalSeconds,
-                                                   exception.Message);
-                              });
+            
 
             var json = JsonConvert.SerializeObject(@event);
             var body = Encoding.UTF8.GetBytes(json);
 
             var routingKey = @event.GetType().Name;
 
+            _logger.LogTrace("Publishing message...");
 
-            // Made with polly coz connection may
-            // return exception
-            polly.Execute(() =>
-            {
-                _logger.LogTrace("Publishing message...");
-
-                _channel.BasicPublish(exchange: EXCHANGE_NAME,
-                           routingKey: routingKey,
-                           mandatory: true,
-                           basicProperties: null,
-                           body: body);
-            });
+            _channel.BasicPublish(exchange: EXCHANGE_NAME,
+                       routingKey: routingKey,
+                       mandatory: true,
+                       basicProperties: null,
+                       body: body);
         }
 
         public void Subscribe(string eventName)
@@ -84,7 +68,24 @@ namespace RabbitMQBus
             _logger.LogTrace("Creating a connection");
 
             var factory = new ConnectionFactory { HostName = hostName, DispatchConsumersAsync = true };
-            var connection = factory.CreateConnection();
+
+            var polly = RetryPolicy.Handle<BrokerUnreachableException>()
+                .Or<SocketException>()
+                .WaitAndRetry(_retryAmount,
+                              retryTime => TimeSpan.FromSeconds(Math.Pow(2, retryTime)),
+                              (exception, time) =>
+                              {
+                                  _logger.LogError(exception,
+                                                   "Exception appeared while trying to createConnection, Time passed: {time}, ex: {exception}",
+                                                   time.TotalSeconds,
+                                                   exception.Message);
+                              });
+
+            IConnection connection = null;
+            polly.Execute(() =>
+            {
+                connection = factory.CreateConnection();
+            });
 
             _logger.LogTrace("Connection was created, HostName: {hostname}", hostName);
 
