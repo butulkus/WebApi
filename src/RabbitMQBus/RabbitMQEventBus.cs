@@ -19,18 +19,20 @@ namespace RabbitMQBus
     {
         const string EXCHANGE_NAME = "RabbitMQEventBus";
         const string AUTOFAC_SCOPE_NAME = "RabbitMQEventBus";
-        const string QUEUE_NAME = "MyQueue2"; // TODO will Refactor it
+        const string QUEUE_NAME = "MyQueue2";
 
         private IConnection _connection;
         private IModel _channel;
         private readonly int _retryAmount;
 
         private readonly ILifetimeScope _autofac;
+        private readonly ISubscriptionsManager _subscriptionsManager;
         private readonly ILogger<RabbitMQEventBus> _logger;
 
-        public RabbitMQEventBus(ILifetimeScope autofac, ILogger<RabbitMQEventBus> logger, int retryAmount = 3)
+        public RabbitMQEventBus(ILifetimeScope autofac, ISubscriptionsManager subscriptionsManager, ILogger<RabbitMQEventBus> logger, int retryAmount = 3)
         {
             _autofac = autofac;
+            _subscriptionsManager = subscriptionsManager;
             _logger = logger;
             _retryAmount = retryAmount;
 
@@ -72,8 +74,15 @@ namespace RabbitMQBus
             });
         }
 
-        public void Subscribe(string eventName)
+        public void Subscribe<EV, EH>()
+            where EV : IntegrationEvent
+            where EH : IEventHandler
         {
+            var eventName = typeof(EV).Name;
+            _subscriptionsManager.SubscribeHandlerForEvent<EV, EH>();
+
+            _logger.LogTrace("Event: {event} was subscribed with handler: {handler}", eventName, typeof(EH).Name);
+
             BindQueue(eventName);
 
             ListenQueue(); 
@@ -152,22 +161,21 @@ namespace RabbitMQBus
 
         private async Task HandleEvent(string message, string eventName)
         {
+            var subs = _subscriptionsManager.GetHandlersForEvent(eventName);
+
             using var autofac = _autofac.BeginLifetimeScope(AUTOFAC_SCOPE_NAME);
-            foreach (var events in EventsList.Events)
+            foreach (var events in subs)
             {
-                if (events.eventName == eventName)
-                {
-                    var eventType = Type.GetType(events.eventPath);
-                    var integrationEvent = System.Text.Json.JsonSerializer.Deserialize(message, eventType, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true });
-                    var concreteType = typeof(IEventHandler<>).MakeGenericType(eventType);
+                var eventType = _subscriptionsManager.GetEventTypeByName(eventName);
+                var concreteType = typeof(IEventHandler<>).MakeGenericType(eventType);
 
-                    var handlerType = Type.GetType(events.eventHandlerPath);
-                    var handler = autofac.ResolveOptional(handlerType);
+                var integrationEvent = System.Text.Json.JsonSerializer.Deserialize(message, eventType, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true });
 
-                    // Have made await + Task because using
-                    // disposed it earlier than method had completed
-                    await (Task)concreteType.GetMethod("Handle").Invoke(handler, new object[] { integrationEvent });
-                }
+                var handler = autofac.ResolveOptional(events);
+
+                // Have made await + Task because using
+                // disposed it earlier than method had completed
+                await (Task)concreteType.GetMethod("Handle").Invoke(handler, new object[] { integrationEvent });
             }
         }
 
